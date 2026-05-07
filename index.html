@@ -1,0 +1,77 @@
+var TOKEN = "ТВОЙ_ТОКЕН_БОТА";
+var CHANNEL_ID = "@ТВОЙ_КАНАЛ"; 
+var MINI_APP_URL = "https://ТВОЙ-НИК.github.io/jumper-tma/index.html";
+var REG_URL = "ТВОЯ_РЕФ_ССЫЛКА";
+var SUPPORT_URL = "https://t.me/ТВОЙ_КОНТАКТ";
+var VIDEO_URL = "ССЫЛКА_НА_ОБУЧЕНИЕ_ЮТУБ";
+
+// Пути к твоим новым картинкам на GitHub
+var IMG_MAIN = "https://ТВОЙ-НИК.github.io/jumper-tma/jumper_main.png"; 
+var IMG_REG = "https://ТВОЙ-НИК.github.io/jumper-tma/jumper_reg.png";
+var IMG_FINAL = "https://ТВОЙ-НИК.github.io/jumper-tma/jumper_final.png";
+
+var TEXTS = {
+  'ru': { 
+    'back': "⬅️ Назад", 
+    'sub_req': "🛑 Чтобы активировать Jumper Predictor, подпишись на наш канал!", 
+    'sub_btn': "ПОДПИСАТЬСЯ 🔄", 
+    'check_btn': "Я ПОДПИСАЛСЯ ✅", 
+    'reg_req': "Почти у цели! 🚀\n\nДля синхронизации сигналов с твоим аккаунтом:\n1. Зарегистрируйся на платформе по кнопке ниже.\n2. Нажми 'ПОДТВЕРДИТЬ' для калибровки бота.", 
+    'reg_btn': "РЕГИСТРАЦИЯ 🎰", 
+    'confirm_btn': "ПОДТВЕРДИТЬ ✅", 
+    'supp': "Поддержка 👨‍💻", 
+    'play': "ЗАПУСТИТЬ JUMPER 🚀", 
+    'how': "Инструкция ❓", 
+    'final': "Синхронизация завершена! Нажимай кнопку ниже и следуй траектории прыжков.", 
+    'err': "❌ Ошибка! Подписка не найдена." 
+  },
+  // Остальные языки (uk, kk, en) настраиваются аналогично
+};
+
+function doPost(e) {
+  try {
+    var update = JSON.parse(e.postData.contents);
+    if (update.message && update.message.text) {
+      var chatId = update.message.chat.id;
+      if (update.message.text === "/start") sendLangMenu(chatId);
+    } else if (update.callback_query) {
+      handleCallback(update.callback_query);
+    }
+  } catch (err) {
+    console.log("Error: " + err);
+  }
+}
+
+function handleCallback(query) {
+  var chatId = query.message.chat.id;
+  var msgId = query.message.message_id;
+  var data = query.data;
+  var userId = query.from.id;
+
+  if (data.indexOf("lang_") === 0) {
+    var lang = data.replace("lang_", "");
+    deleteMessage(chatId, msgId);
+    sendSubMenu(chatId, lang);
+  } else if (data === "back_lang") {
+    deleteMessage(chatId, msgId);
+    sendLangMenu(chatId);
+  } else if (data.indexOf("check_sub_") === 0) {
+    var l = data.replace("check_sub_", "");
+    if (checkSubscription(userId)) {
+      deleteMessage(chatId, msgId);
+      sendRegMenu(chatId, l);
+    } else {
+      answerCallback(query.id, TEXTS[l].err);
+    }
+  } else if (data.indexOf("confirm_reg_") === 0) {
+    var l = data.replace("confirm_reg_", "");
+    deleteMessage(chatId, msgId);
+    sendFinalMenu(chatId, l);
+  } else if (data.indexOf("back_reg_") === 0) {
+    var l = data.replace("back_reg_", "");
+    deleteMessage(chatId, msgId);
+    sendRegMenu(chatId, l);
+  }
+}
+
+// Вспомогательные функции (checkSubscription, sendPhoto, и т.д.) остаются без изменений из твоего прошлого кода

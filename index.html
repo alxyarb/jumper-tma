@@ -1,77 +1,260 @@
-var TOKEN = "ТВОЙ_ТОКЕН_БОТА";
-var CHANNEL_ID = "@ТВОЙ_КАНАЛ"; 
-var MINI_APP_URL = "https://ТВОЙ-НИК.github.io/jumper-tma/index.html";
-var REG_URL = "ТВОЯ_РЕФ_ССЫЛКА";
-var SUPPORT_URL = "https://t.me/ТВОЙ_КОНТАКТ";
-var VIDEO_URL = "ССЫЛКА_НА_ОБУЧЕНИЕ_ЮТУБ";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Jumper Predictor AI</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&display=swap');
 
-// Пути к твоим новым картинкам на GitHub
-var IMG_MAIN = "https://ТВОЙ-НИК.github.io/jumper-tma/jumper_main.png"; 
-var IMG_REG = "https://ТВОЙ-НИК.github.io/jumper-tma/jumper_reg.png";
-var IMG_FINAL = "https://ТВОЙ-НИК.github.io/jumper-tma/jumper_final.png";
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background: #000 url('https://raw.githubusercontent.com/alxyarb/jumper-tma/main/font.png') no-repeat center center fixed;
+            background-size: cover;
+            color: white;
+            font-family: 'Montserrat', sans-serif;
+            overflow: hidden;
+            display: flex; align-items: center; justify-content: center;
+            user-select: none; -webkit-tap-highlight-color: transparent;
+        }
 
-var TEXTS = {
-  'ru': { 
-    'back': "⬅️ Назад", 
-    'sub_req': "🛑 Чтобы активировать Jumper Predictor, подпишись на наш канал!", 
-    'sub_btn': "ПОДПИСАТЬСЯ 🔄", 
-    'check_btn': "Я ПОДПИСАЛСЯ ✅", 
-    'reg_req': "Почти у цели! 🚀\n\nДля синхронизации сигналов с твоим аккаунтом:\n1. Зарегистрируйся на платформе по кнопке ниже.\n2. Нажми 'ПОДТВЕРДИТЬ' для калибровки бота.", 
-    'reg_btn': "РЕГИСТРАЦИЯ 🎰", 
-    'confirm_btn': "ПОДТВЕРДИТЬ ✅", 
-    'supp': "Поддержка 👨‍💻", 
-    'play': "ЗАПУСТИТЬ JUMPER 🚀", 
-    'how': "Инструкция ❓", 
-    'final': "Синхронизация завершена! Нажимай кнопку ниже и следуй траектории прыжков.", 
-    'err': "❌ Ошибка! Подписка не найдена." 
-  },
-  // Остальные языки (uk, kk, en) настраиваются аналогично
-};
+        .screen {
+            display: none; flex-direction: column; align-items: center;
+            width: 100%; height: 100%; justify-content: center;
+            position: absolute; top: 0; left: 0; transition: opacity 0.5s ease;
+        }
+        .screen.active { display: flex; }
+        .backdrop { backdrop-filter: blur(12px); background: rgba(0, 0, 0, 0.75); }
 
-function doPost(e) {
-  try {
-    var update = JSON.parse(e.postData.contents);
-    if (update.message && update.message.text) {
-      var chatId = update.message.chat.id;
-      if (update.message.text === "/start") sendLangMenu(chatId);
-    } else if (update.callback_query) {
-      handleCallback(update.callback_query);
-    }
-  } catch (err) {
-    console.log("Error: " + err);
-  }
-}
+        h2 {
+            margin-bottom: 25px; text-align: center; font-size: 20px;
+            color: #4cd137; text-shadow: 0 0 15px rgba(76, 209, 55, 0.5); text-transform: uppercase;
+        }
 
-function handleCallback(query) {
-  var chatId = query.message.chat.id;
-  var msgId = query.message.message_id;
-  var data = query.data;
-  var userId = query.from.id;
+        /* ЯЗЫКИ */
+        .lang-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 85%; max-width: 350px; }
+        .lang-btn { 
+            background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2); 
+            border-radius: 12px; padding: 18px 10px; font-size: 15px; color: white; 
+            font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; 
+        }
+        .lang-btn img { width: 22px; border-radius: 2px; }
+        .lang-btn.selected { background: rgba(76, 209, 55, 0.2); border-color: #4cd137; box-shadow: 0 0 15px rgba(76, 209, 55, 0.3); }
 
-  if (data.indexOf("lang_") === 0) {
-    var lang = data.replace("lang_", "");
-    deleteMessage(chatId, msgId);
-    sendSubMenu(chatId, lang);
-  } else if (data === "back_lang") {
-    deleteMessage(chatId, msgId);
-    sendLangMenu(chatId);
-  } else if (data.indexOf("check_sub_") === 0) {
-    var l = data.replace("check_sub_", "");
-    if (checkSubscription(userId)) {
-      deleteMessage(chatId, msgId);
-      sendRegMenu(chatId, l);
-    } else {
-      answerCallback(query.id, TEXTS[l].err);
-    }
-  } else if (data.indexOf("confirm_reg_") === 0) {
-    var l = data.replace("confirm_reg_", "");
-    deleteMessage(chatId, msgId);
-    sendFinalMenu(chatId, l);
-  } else if (data.indexOf("back_reg_") === 0) {
-    var l = data.replace("back_reg_", "");
-    deleteMessage(chatId, msgId);
-    sendRegMenu(chatId, l);
-  }
-}
+        .continue-btn { 
+            margin-top: 35px; background: #222; color: #555; border: none; 
+            padding: 16px 60px; font-size: 16px; font-weight: 900; border-radius: 12px; 
+            cursor: not-allowed; text-transform: uppercase; transition: 0.3s;
+        }
+        .continue-btn.active { 
+            background: #4cd137; color: #000; cursor: pointer; 
+            box-shadow: 0 0 25px rgba(76, 209, 55, 0.5);
+        }
 
-// Вспомогательные функции (checkSubscription, sendPhoto, и т.д.) остаются без изменений из твоего прошлого кода
+        /* РУЛЕТКА */
+        .roulette-wrapper { width: 100%; height: 100px; overflow: hidden; position: relative; background: rgba(255, 255, 255, 0.05); border-top: 2px solid #4cd137; border-bottom: 2px solid #4cd137; display: flex; align-items: center; }
+        .marker { position: absolute; left: 50%; top: 0; bottom: 0; width: 3px; background: #ff0000; transform: translateX(-50%); z-index: 5; box-shadow: 0 0 10px #ff0000; }
+        .roulette-strip { display: flex; gap: 10px; padding-left: 50%; will-change: transform; }
+        .card { min-width: 130px; height: 65px; background: #1a1d24; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16px; font-weight: 900; flex-shrink: 0; }
+        .card.winner { border-color: #4cd137; background: rgba(76, 209, 55, 0.2); color: #4cd137; transform: scale(1.05); }
+        .spin-btn { margin-top: 40px; background: #4cd137; border: none; padding: 15px 50px; font-size: 18px; font-weight: 900; border-radius: 10px; cursor: pointer; color: #000; text-transform: uppercase; }
+
+        /* ИГРА */
+        .mode-label { font-size: 12px; color: #888; margin-bottom: 10px; font-weight: 900; letter-spacing: 1px; }
+        .mode-grid { display: flex; gap: 8px; width: 95%; max-width: 400px; justify-content: center; }
+        .mode-item { flex: 1; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 12px 5px; font-size: 11px; font-weight: 900; color: #ccc; cursor: pointer; text-align: center; text-transform: uppercase; }
+        .mode-item.active { border-color: #4cd137; color: #4cd137; background: rgba(76, 209, 55, 0.1); }
+
+        .signal-box { 
+            position: relative; width: 220px; height: 220px; 
+            background: rgba(0, 0, 0, 0.8); border-radius: 50%; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            border: 2px solid rgba(255, 255, 255, 0.1); margin: 20px 0;
+        }
+
+        #scanner-svg {
+            position: absolute; width: 210px; height: 210px;
+            transform: rotate(-90deg);
+        }
+        #scanner-svg circle {
+            fill: none; stroke-width: 6; stroke-linecap: round;
+            stroke: #4cd137; stroke-dasharray: 630; stroke-dashoffset: 630;
+            transition: stroke-dashoffset 0.1s linear;
+        }
+
+        #coefficient { font-size: 48px; font-weight: 900; color: #fff; z-index: 2; }
+        .result-success { color: #4cd137 !important; text-shadow: 0 0 20px rgba(76, 209, 55, 0.6); }
+
+        #status-text { font-size: 10px; color: #4cd137; margin-top: 15px; font-weight: bold; text-transform: uppercase; min-height: 15px; z-index: 2; }
+
+        .btn-signal { 
+            background: #4cd137; border: none; padding: 18px 0; width: 85%; 
+            font-size: 20px; font-weight: 900; color: #000; border-radius: 12px; 
+            cursor: pointer; text-transform: uppercase; transition: 0.2s;
+        }
+        .btn-signal:disabled { background: #333; color: #666; cursor: not-allowed; }
+
+        #chance-text { font-size: 12px; color: #4cd137; margin-top: 10px; font-weight: 900; opacity: 0; transition: 0.3s; }
+    </style>
+</head>
+<body>
+
+    <div id="language-screen" class="screen backdrop active">
+        <h2 id="lang-title">SELECT LANGUAGE</h2>
+        <div class="lang-grid">
+            <button class="lang-btn" onclick="selectLang('ru', this)"><img src="https://flagcdn.com/w40/ru.png"> RU</button>
+            <button class="lang-btn" onclick="selectLang('uz', this)"><img src="https://flagcdn.com/w40/uz.png"> UZ</button>
+            <button class="lang-btn" onclick="selectLang('kz', this)"><img src="https://flagcdn.com/w40/kz.png"> KZ</button>
+            <button class="lang-btn" onclick="selectLang('az', this)"><img src="https://flagcdn.com/w40/az.png"> AZ</button>
+        </div>
+        <button id="continue-btn" class="continue-btn" onclick="checkHistoryAndProceed()" disabled>CONTINUE</button>
+    </div>
+
+    <div id="roulette-screen" class="screen backdrop">
+        <h2 id="roulette-header"></h2>
+        <div class="roulette-wrapper"><div class="marker"></div><div class="roulette-strip" id="strip"></div></div>
+        <button class="spin-btn" id="spin-btn-text" onclick="startSpin()">SPIN</button>
+    </div>
+
+    <div id="game-screen" class="screen">
+        <div id="mode-title" class="mode-label">ВЫБЕРИТЕ РЕЖИМ</div>
+        <div class="mode-grid">
+            <div class="mode-item active" onclick="setMode('easy', this)">EASY</div>
+            <div class="mode-item" onclick="setMode('medium', this)">MEDIUM</div>
+            <div class="mode-item" onclick="setMode('hard', this)">HARD</div>
+        </div>
+
+        <div class="signal-box">
+            <svg id="scanner-svg"><circle cx="105" cy="105" r="100"></circle></svg>
+            <div id="coefficient">x0.00</div>
+            <div id="status-text"></div>
+        </div>
+
+        <button class="btn-signal" id="signalBtn" onclick="getSignal()">ПОЛУЧИТЬ СИГНАЛ</button>
+        <div id="chance-text">ШАНС: 0%</div>
+    </div>
+
+    <script>
+        const translations = {
+            ru: { title: "ВЫБЕРИТЕ ЯЗЫК", roulett: "ВЫ ПОЛУЧИЛИ БЕСПЛАТНЫЙ ДОСТУП НА:", spin: "КРУТИТЬ", btn: "ПОЛУЧИТЬ СИГНАЛ", mode: "ВЫБЕРИТЕ РЕЖИМ", days: "ДНЕЙ", analysis: ["ПОДКЛЮЧЕНИЕ...", "ПОИСК УЯЗВИМОСТИ...", "КАЛИБРОВКА АККАУНТА..."], chance: "ШАНС:" },
+            uz: { title: "TILNI TANLANG", roulett: "SIZ BEPUL KIRISH HUQUQINI OLDINGIZ:", spin: "AYLANTIRISH", btn: "SIGNAL OLISH", mode: "REJIMNI TANLANG", days: "KUN", analysis: ["ULANISH...", "ZAIFLIKNI QIDIRISH...", "HISOBNI KALIBRLASH..."], chance: "IMKONIYAT:" },
+            kz: { title: "ТІЛДІ ТАҢДАҢЫЗ", roulett: "СІЗ ТЕГІН КІРУ МҮМКІНДІГІН АЛДЫҢЫЗ:", spin: "АЙНАЛДЫРУ", btn: "СИГНАЛ АЛУ", mode: "РЕЖИМДІ ТАҢДАҢЫЗ", days: "КҮН", analysis: ["ҚОСЫЛУ...", "ӘЛСІЗДІКТІ ІЗДЕУ...", "АККАУНТТЫ КАЛИБРЛЕУ..."], chance: "МҮМКІНДІК:" },
+            az: { title: "DİLİ SEÇİN", roulett: "SİZ PULSUZ GİRİŞ ƏLDƏ ETDİNİZ:", spin: "FIRLAT", btn: "SİQNAL AL", mode: "REJİMİ SEÇİN", days: "GÜN", analysis: ["BAĞLANIR...", "ZƏİFLİK AXTARILIR...", "HESAB KALİBRASİYASI..."], chance: "ŞANS:" }
+        };
+
+        const modeData = {
+            'easy': ["1.36", "1.45", "1.55", "1.66", "1.78", "1.93", "2.08", "2.26", "2.47", "2.70", "2.96", "3.25", "3.59", "3.98", "4.42", "4.93", "5.51"],
+            'medium': ["1.42", "1.58", "1.77", "2.00", "2.29", "2.64", "3.07", "3.60", "4.27", "5.11"],
+            'hard': ["1.66", "1.93", "2.28", "2.72", "3.31", "4.07", "5.09"]
+        };
+
+        let currentLang = 'ru';
+        let currentMode = 'easy';
+        const hasSpun = localStorage.getItem('jumper_v16_spin');
+
+        function selectLang(lang, btn) {
+            currentLang = lang;
+            document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            document.getElementById('lang-title').innerText = translations[lang].title;
+            const cb = document.getElementById('continue-btn');
+            cb.classList.add('active'); cb.disabled = false;
+        }
+
+        function checkHistoryAndProceed() {
+            document.getElementById('language-screen').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('language-screen').style.display = 'none';
+                if (hasSpun) showGame(); else showRoulette();
+            }, 500);
+        }
+
+        function showRoulette() {
+            document.getElementById('roulette-header').innerText = translations[currentLang].roulett;
+            document.getElementById('spin-btn-text').innerText = translations[currentLang].spin;
+            const items = ["2", "7", "30", "21", "90"];
+            let html = "";
+            for(let i=0; i<60; i++) {
+                let val = items[Math.floor(Math.random()*items.length)];
+                if(i===35) val = "21";
+                html += `<div class="card" id="card-${i}">${val} ${translations[currentLang].days}</div>`;
+            }
+            document.getElementById('strip').innerHTML = html;
+            document.getElementById('roulette-screen').style.display = 'flex';
+        }
+
+        function startSpin() {
+            document.getElementById('spin-btn-text').style.visibility = 'hidden';
+            const strip = document.getElementById('strip');
+            strip.style.transition = "transform 5.5s cubic-bezier(0.15, 0.85, 0.15, 1)";
+            strip.style.transform = `translateX(-${(35 * 140) + 70}px)`;
+            setTimeout(() => {
+                document.getElementById('card-35').classList.add('winner');
+                localStorage.setItem('jumper_v16_spin', 'true');
+                setTimeout(() => { showGame(); }, 2500);
+            }, 6000);
+        }
+
+        function showGame() {
+            document.getElementById('roulette-screen').style.display = 'none';
+            document.getElementById('signalBtn').innerText = translations[currentLang].btn;
+            document.getElementById('mode-title').innerText = translations[currentLang].mode;
+            document.getElementById('game-screen').style.display = 'flex';
+        }
+
+        function setMode(m, el) {
+            currentMode = m;
+            document.querySelectorAll('.mode-item').forEach(i => i.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        function getSignal() {
+            const btn = document.getElementById('signalBtn');
+            const coef = document.getElementById('coefficient');
+            const st = document.getElementById('status-text');
+            const ch = document.getElementById('chance-text');
+            const ring = document.querySelector('#scanner-svg circle');
+
+            btn.disabled = true;
+            coef.classList.remove('result-success');
+            coef.innerText = "x0.00";
+            ch.style.opacity = '0';
+            ring.style.strokeDashoffset = 630;
+            
+            let progress = 0;
+            const phases = translations[currentLang].analysis;
+            
+            let timer = setInterval(() => {
+                let jump = Math.random() > 0.85 ? Math.random() * 0.4 : Math.random() * 1.2;
+                if ((progress > 40 && progress < 45) || (progress > 80 && progress < 86)) jump *= 0.3;
+
+                progress += jump;
+                if (progress >= 100) progress = 100;
+                
+                let offset = 630 - (630 * progress) / 100;
+                ring.style.strokeDashoffset = offset;
+                
+                if (progress < 30) st.innerText = phases[0];
+                else if (progress < 70) st.innerText = phases[1];
+                else st.innerText = phases[2];
+
+                if (progress >= 100) {
+                    clearInterval(timer);
+                    setTimeout(finishSignal, 600);
+                }
+            }, 85);
+
+            function finishSignal() {
+                st.innerText = "";
+                const chances = {easy: "98%", medium: "88%", hard: "76%"};
+                
+                coef.innerText = "x" + modeData[currentMode][Math.floor(Math.random()*modeData[currentMode].length)];
+                coef.classList.add('result-success');
+                ch.innerText = translations[currentLang].chance + " " + chances[currentMode];
+                ch.style.opacity = '1';
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

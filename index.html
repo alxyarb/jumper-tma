@@ -68,7 +68,7 @@
         .signal-box { 
             position: relative; width: 220px; height: 220px; 
             background: rgba(0, 0, 0, 0.8); border-radius: 50%; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            display: flex; align-items: center; justify-content: center; 
             border: 2px solid rgba(255, 255, 255, 0.1); margin: 20px 0;
         }
 
@@ -82,13 +82,21 @@
             transition: stroke-dashoffset 0.1s linear;
         }
 
-        #coefficient { font-size: 48px; font-weight: 900; color: #fff; z-index: 2; }
-        .result-success { color: #4cd137 !important; text-shadow: 0 0 20px rgba(76, 209, 55, 0.6); }
+        #coefficient { 
+            font-size: 54px; font-weight: 900; color: #fff; z-index: 2; 
+            position: absolute; top: 50%; left: 50%; 
+            transform: translate(-50%, -50%); margin: 0; line-height: 1;
+        }
+        .result-success { color: #4cd137 !important; text-shadow: 0 0 25px rgba(76, 209, 55, 0.8); }
 
-        #status-text { font-size: 10px; color: #4cd137; margin-top: 15px; font-weight: bold; text-transform: uppercase; min-height: 15px; z-index: 2; }
+        #status-text { 
+            position: absolute; bottom: 45px; width: 100%;
+            font-size: 9px; color: #4cd137; font-weight: bold; 
+            text-transform: uppercase; text-align: center; z-index: 2;
+        }
 
         .btn-signal { 
-            background: #4cd137; border: none; padding: 18px 0; width: 85%; 
+            background: #4cd137; border: none; padding: 18px 0; width: 85%; max-width: 380px;
             font-size: 20px; font-weight: 900; color: #000; border-radius: 12px; 
             cursor: pointer; text-transform: uppercase; transition: 0.2s;
         }
@@ -150,7 +158,7 @@
 
         let currentLang = 'ru';
         let currentMode = 'easy';
-        const hasSpun = localStorage.getItem('jumper_v16_spin');
+        const hasSpun = localStorage.getItem('jumper_final_v2'); 
 
         function selectLang(lang, btn) {
             currentLang = lang;
@@ -190,7 +198,7 @@
             strip.style.transform = `translateX(-${(35 * 140) + 70}px)`;
             setTimeout(() => {
                 document.getElementById('card-35').classList.add('winner');
-                localStorage.setItem('jumper_v16_spin', 'true');
+                localStorage.setItem('jumper_final_v2', 'true');
                 setTimeout(() => { showGame(); }, 2500);
             }, 6000);
         }
